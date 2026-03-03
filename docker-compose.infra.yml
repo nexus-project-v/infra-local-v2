@@ -1,0 +1,95 @@
+services:
+  nexus-postgres:
+    image: postgres:16.3-alpine
+    container_name: nexus-postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: Postgres2024!
+      POSTGRES_USER: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nexus-network
+
+  nexus-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nexus-pgadmin
+    restart: always
+    depends_on:
+      - nexus-postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: infra@nexus.com.br
+      PGADMIN_DEFAULT_PASSWORD: PgAdmin2024!
+    ports:
+      - "16543:80"
+    networks:
+      - nexus-network
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - nexus-network
+
+  nexus-discovery-server-api:
+    image: rogeriofontes/nexus-discovery-server-api:v0.0.1
+    container_name: nexus-discovery-server-api
+    ports:
+      - "8761:8761"
+    networks:
+      - nexus-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - nexus-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - nexus-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8085:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+    depends_on:
+      - kafka
+    networks:
+      - nexus-network
+
+networks:
+  nexus-network:
+    name: nexus-network
+
+volumes:
+  postgres-data:
