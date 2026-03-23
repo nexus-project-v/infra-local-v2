@@ -1,120 +1,18 @@
 services:
-  nexus-client-api:
-    image: rogeriofontes/nexus-client-api:v0.0.1
-    container_name: nexus-client-api
+  nexus-change-api:
+    image: rogeriofontes/nexus-change-api:v0.0.1
+    container_name: nexus-change-api
     environment:
-      DATABASE_URL: jdbc:postgresql://nexus-postgres:5432/ns-client-db
-      DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: Postgres2024!
-      SECURITY_JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
-      API_GATEWAY_URL_PRIVACY_NOTIFICATION_STATUS: http://nexus-privacy-notification-status-api:9916/status
-      AWS_REGION: us-east-1
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-    ports:
-      - "9912:9912"
-    networks:
-      - nexus-network
-
-  nexus-company-api:
-    image: rogeriofontes/nexus-company-api:v0.0.1
-    container_name: nexus-company-api
-    environment:
-      DATABASE_URL: jdbc:postgresql://nexus-postgres:5432/ns-company-db
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: Postgres2024!
-      API_GATEWAY_CLIENT_URL: http://nexus-client-api:9912/clientes
-      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
-      AWS_REGION: us-east-1
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-    ports:
-      - "9913:9913"
-    depends_on:
-      - nexus-client-api
-    networks:
-      - nexus-network
-
-  nexus-product-api:
-    image: rogeriofontes/nexus-product-api:v0.0.1
-    container_name: nexus-product-api
-    environment:
-      DATABASE_URL: jdbc:postgresql://nexus-postgres:5432/ns-product-db
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: Postgres2024!
-      API_GATEWAY_CLIENT_URL: http://nexus-client-api:9912/clientes
-      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-    ports:
-      - "9914:9914"
-    networks:
-      - nexus-network
-
-  nexus-inventory-api:
-    image: rogeriofontes/nexus-inventory-api:v0.0.1
-    container_name: nexus-inventory-api
-    environment:
-      DATABASE_URL: jdbc:postgresql://nexus-postgres:5432/ns-inventory-db
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: Postgres2024!
-      API_GATEWAY_PRODUCT_URL: http://nexus-product-api:9915/products
-      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
-      API_GATEWAY_URL_PRIVACY_NOTIFICATION_STATUS: http://nexus-privacy-notification-status-api:9916/status
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-    ports:
-      - "9915:9915"
-    depends_on:
-      - nexus-product-api
-    networks:
-      - nexus-network
-
-  nexus-payment-api:
-    image: rogeriofontes/nexus-payment-api:v0.0.1
-    container_name: nexus-payment-api
-    environment:
-      CLIENT_API_URL: http://nexus-client-api:9912/api/v1
-      DATABASE_NAME: ns-payment-db
-      DATABASE_PASSWORD: Postgres2024!
-      DATABASE_PORT: 5432
-      DATABASE_URL: nexus-postgres
-      DATABASE_USERNAME: postgres
-      MERCADO_PAGO_ACCESS_TOKEN_KEY: 123
-      SECURITY_JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      SWAGGER_API_URL: http://nexus-payment-api:8888
-      TRANSACTION_API_URL: http://nexus-transaction-api:9916/api/v1
-      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      KAFKA_CONSUMER_GROUP_ID: pagament_id
-    ports:
-      - "8888:8888"
-    networks:
-      - nexus-network
-
-  nexus-transaction-api:
-    image: rogeriofontes/nexus-transaction-api:v0.0.1
-    container_name: nexus-transaction-api
-    environment:
-      API_GATEWAY_CLIENT_URL: http://nexus-client-api:9912/api/v1
-      API_GATEWAY_COMPANY_URL: http://nexus-company-api:9913/api/v1
-      API_GATEWAY_INVENTORY_URL: http://nexus-inventory-api:9915/api/v1
-      API_GATEWAY_PAYMENT_URL: http://nexus-payment-api:9916/api/v1
-      API_GATEWAY_PRODUCT_URL: http://nexus-product-api:9914/api/v1
-      API_GATEWAY_SELLER_URL: http://nexus-company-api:9913/api/v1
-      DATABASE_PASSWORD: Postgres2024!
-      DATABASE_URL: jdbc:postgresql://nexus-postgres:5432/ns-transaction-db
+      DATABASE_URL: jdbc:postgresql://nexus-postgres:5432/ns-change-db
       DATABASE_USERNAME: postgres
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092   # <-- AQUI ajustado (antes estava kafka:9092)
       PAYMENT_PROVIDER: provider-local
       SECURITY_JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      SWAGGER_API_URL: http://nexus-transaction-api:9916
+      SWAGGER_API_URL: http://nexus-change-api:9933
       ZIPKIN_URL: http://zipkin:9411/api/v2/spans
     ports:
-      - "9916:9916"
-    depends_on:
-      - nexus-payment-api
-      - nexus-client-api
-      - nexus-company-api
-      - nexus-inventory-api
-      - nexus-product-api
+      - "9933:9933"
     networks:
       - nexus-network
 

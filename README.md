@@ -147,4 +147,4 @@ docker info
 
 docker compose -f docker-compose.infra.yml up -d
 docker compose -f docker-compose.apps.yml up -d
-docker compose -f docker-compose.apps.yml down
+docker compose -f docker-compose.apps.yml down# infra-local-v2
