@@ -19,5 +19,5 @@ plugins:
   - name: rate-limiting
     route: change-route
     config:
-      minute: 25
+      minute: 500
       policy: local
