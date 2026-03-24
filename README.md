@@ -121,6 +121,11 @@ docker compose -f docker-compose.infra.yml -f docker-compose.apps.yml down
 - Tracing distribuído com Zipkin
 - Monitoramento de fluxo entre serviços
 
+#### Acessando o Grafana:
+👉 http://localhost:3000
+Login:
+Usuario: admin
+Senha: admin
 ---
 
 ## ⚙️ Variáveis importantes

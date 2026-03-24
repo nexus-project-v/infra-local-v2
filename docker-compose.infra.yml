@@ -87,6 +87,46 @@ services:
     networks:
       - nexus-network
 
+  ## Infraestrutura de monitoramento
+  # 🔹 OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - C:/dev/nttdata/poc-vivo/v2/infra/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # gRPC
+      - "4318:4318"   # HTTP
+
+  # 🔹 Loki (logs)
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+
+  # 🔹 Tempo (traces)
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml", "-target=all"]
+    volumes:
+      - C:/dev/nttdata/poc-vivo/v2/infra/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200"
+    networks:
+      - nexus-network
+
+  # 🔹 Grafana (UI)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
 networks:
   nexus-network:
     name: nexus-network
