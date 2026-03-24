@@ -1,150 +1,175 @@
-docker logs -f kafka
+# 🚀 Nexus Platform — Arquitetura Local com Docker Compose
 
-✅ 1️⃣ Ver se o Kafka está de pé
-docker ps
+Este projeto provisiona um ambiente completo de **microserviços orientados a eventos** utilizando Docker Compose, incluindo:
 
-Você deve ver o container kafka rodando.
+- API Gateway (Kong)
+- Microsserviços (Change API / Deploy API)
+- Mensageria (Kafka + Zookeeper)
+- Banco de Dados (PostgreSQL + PgAdmin)
+- Observabilidade (Zipkin)
 
-Logs:
+---
 
-docker logs -f kafka
+## 🧱 Arquitetura
 
-Procure algo como: KafkaServer started.
+### 🔄 Fluxo principal
 
-✅ 2️⃣ Listar tópicos
-docker exec -it kafka kafka-topics --list --bootstrap-server kafka:9092
+Frontend → Kong → Change API → Kafka → Deploy API
 
-Se não aparecer nada, ok (ainda não criou tópicos).
+---
 
-✅ 3️⃣ Criar um tópico para teste
-docker exec -it kafka kafka-topics --create --topic transactions.created --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1
+## 📦 Serviços
 
-Conferir:
+### 🗄️ Banco de Dados
 
-docker exec -it kafka kafka-topics --describe --topic transactions.created --bootstrap-server kafka:9092
+| Serviço | Porta | Descrição |
+|--------|------|----------|
+| Postgres | 5432 | Banco principal |
+| PgAdmin | 16543 | Interface web de administração |
 
+---
 
-  ✅ 4️⃣ Produzir mensagens no terminal (Producer)
+### 📡 Mensageria
 
-Abra um terminal e rode:
+| Serviço | Porta | Descrição |
+|--------|------|----------|
+| Zookeeper | 2181 | Coordenação do Kafka |
+| Kafka | 9092 | Broker de eventos |
+| Kafka UI | 8085 | Interface para visualizar tópicos |
 
-docker exec -it kafka kafka-console-producer --topic transactions.created --bootstrap-server kafka:9092
+---
 
-docker exec -it kafka kafka-console-producer --topic payments.processed --bootstrap-server kafka:9092
-payments.processed
-{"eventId": "5555-6666","eventType": "PAYMENT_PROCESSED","eventVersion": 1,"occurredAt": "2026-02-15T14:24:10Z","source": "payment-service","correlationId": "order-123","payload": {"transactionCode": "49f98798-82c2-4ac2-a0c5-5dd9aac05972","orderId": "order-123","status": "APPROVED","amount": 199.90,"currency": "BRL","paymentMethod": "PIX","provider": "MERCADO_PAGO","authorizationCode": "MP-983746", "reasonCode": "", "message": ""}}
+### 🔍 Observabilidade
 
-{"eventId": "5555-6666","eventType": "PAYMENT_PROCESSED","eventVersion": 1,"occurredAt": "2026-02-15T14:24:10Z","source": "payment-service","correlationId": "order-123","payload": {"transactionCode": "49f98798-82c2-4ac2-a0c5-5dd9aac05972","orderId": "order-123","status": "DECLINED","amount": 199.90,"currency": "BRL","paymentMethod": "PIX","provider": "MERCADO_PAGO","authorizationCode": "", "reasonCode": "INSUFFICIENT_FUNDS", "message": "Saldo insuficiente"}}
+| Serviço | Porta | Descrição |
+|--------|------|----------|
+| Zipkin | 9411 | Distributed tracing |
 
-{"eventId": "5555-6666","eventType": "PAYMENT_PROCESSED","eventVersion": 1,"occurredAt": "2026-02-15T14:24:10Z","source": "payment-service","correlationId": "order-123","payload": {"transactionCode": "bc82783b-84c1-4de8-808e-0938c1059404","orderId": "order-123","status": "ERROR","amount": 199.90,"currency": "BRL","paymentMethod": "PIX","provider": "MERCADO_PAGO", "authorizationCode": "", "reasonCode": "", "message": "Timeout ao comunicar com o PSP"}}
+---
 
-Agora digite qualquer coisa e aperte Enter:
+### ⚙️ Aplicações
 
-{"eventType":"TRANSACTION_CREATED","transactionId":"tx-1","amount":100.50}
+| Serviço | Porta | Descrição |
+|--------|------|----------|
+| Change API | 9933 | Recebe requests e publica no Kafka |
+| Deploy API | 9934 | Consome eventos do Kafka |
+| Kong Gateway | 8000 / 8001 | API Gateway |
 
-Cada linha = uma mensagem no Kafka.
+---
 
-✅ 5️⃣ Consumir mensagens no terminal (Consumer)
+## 🔐 API Gateway (Kong)
 
-Abra outro terminal:
+- Configuração DB-less via `kong.yml`
+- Roteamento de requisições
+- Possibilidade de:
+  - Rate limiting
+  - Autenticação (JWT)
+  - Logs e métricas
 
-docker exec -it kafka kafka-console-consumer --topic transaction.created --from-beginning --bootstrap-server kafka:9092
---
-{"eventId":"607e7634-a1cf-48f2-b36b-fc8b038606ce","eventType":"TRANSACTION_CREATED","occurredAt":[2026,2,23,20,22,45,1109800],"transactionData":{"id":"7074d4bf-d45f-4929-b202-1a1003afc641","productId":null,"productQuantity":1,"clientId":"76b00215-5c8c-4b2e-ae11-3afd7a5ac609","sellerId":"16ba1b15-b7cf-48fa-bbd1-ed1e98e29916","code":"0b73b0e3-d5bc-49b3-9c11-ae06e4ed190e","price":39.66,"transactionStatus":"RESERVED","transactionTypeId":"5109efb8-d05c-45b1-863e-727a861767c5"},"clientData":{"id":"76b00215-5c8c-4b2e-ae11-3afd7a5ac609","code":"QKUS2","name":"Rogério Fontes Toma 8556","email":"rogerio.fontes.tomaz8556@gmail.com","description":"sdas","mediaId":"1c14484f-aee1-4b7e-b7c6-2b79fccc827c","mobile":"(34) 97452-6758","clientTypeId":"6ef13d89-6051-445e-a5c3-4f36d1435ae1"},"productItems":[{"productId":"58d5db30-4638-4159-a312-cc01b8658ec0"}]}
-===
-docker exec -it kafka kafka-console-consumer --topic orders.ready-for-production.v1 --from-beginning --bootstrap-server kafka:9092
---
-{"transactionId":"073cc193-3972-47f6-836d-7193dae4971b","eventId":"a326bfbd-81c9-4dc7-a760-a47bc880522d","eventType":"ORDER_READY_FOR_PRODUCTION","version":1,"occurredAt":[2026,2,21,12,36,58,544212700],"orderId":"order-123","clientId":"9f6cea3f-ec0f-47b4-8508-7816b49a8f5d","productId":"d74baf3d-ed75-4823-b410-d5491969ebeb","productQuantity":1,"items":null,"shippingEvent":{"address":"Rua Exemplo, 123"}}
-===
-docker exec -it kafka kafka-console-consumer --topic transaction.declined.v1 --from-beginning --bootstrap-server kafka:9092
---
-{"transactionId":"073cc193-3972-47f6-836d-7193dae4971b","eventId":"a326bfbd-81c9-4dc7-a760-a47bc880522d","eventType":"ORDER_READY_FOR_PRODUCTION","version":1,"occurredAt":[2026,2,21,12,36,58,544212700],"orderId":"order-123","clientId":"9f6cea3f-ec0f-47b4-8508-7816b49a8f5d","productId":"d74baf3d-ed75-4823-b410-d5491969ebeb","productQuantity":1,"items":null,"shippingEvent":{"address":"Rua Exemplo, 123"}}
+---
 
-Você deve ver as mensagens que digitou no producer. 🎉
+## 🧪 Como subir o ambiente
 
-✅ 6️⃣ Testar com chave (importante pra ordenação)
+### ▶️ Subir tudo
 
-docker exec -it kafka kafka-console-producer.sh \
-Producer com key:
+```bash
+docker compose -f docker-compose.infra.yml -f docker-compose.apps.yml up -d
+```
 
-docker exec -it kafka kafka-console-producer \
-  --topic transactions.created \
-  --bootstrap-server kafka:9092 \
-  --property "parse.key=true" \
-  --property "key.separator=:"
+### ⛔ Parar tudo
 
-Digite:
+```bash
+docker compose -f docker-compose.infra.yml -f docker-compose.apps.yml down
+```
 
-tx-123:{"eventType":"TRANSACTION_CREATED","transactionId":"tx-123","amount":199.90}
-tx-123:{"eventType":"TRANSACTION_CREATED","transactionId":"tx-123","amount":199.90}
+---
 
-Consumer com chave:
+## 🌐 Acessos
 
-docker exec -it kafka kafka-console-consumer \
-  --topic transactions.created \
-  --bootstrap-server kafka:9092 \
-  --property print.key=true \
-  --property key.separator=" | "
+| Serviço | URL |
+|--------|-----|
+| Kong Proxy | http://localhost:8000 |
+| Kong Admin | http://localhost:8001 |
+| Change API | http://localhost:9933 |
+| Deploy API | http://localhost:9934 |
+| PgAdmin | http://localhost:16543 |
+| Kafka UI | http://localhost:8085 |
+| Zipkin | http://localhost:9411 |
 
-Saída:
+---
 
-tx-123 | {"eventType":"TRANSACTION_CREATED","transactionId":"tx-123","amount":199.90}
-✅ 7️⃣ Limpar / resetar consumo (grupo de consumer)
+## 🧠 Conceitos Arquiteturais
 
-docker exec -it kafka kafka-console-consumer.sh \
+### 🔹 Event-Driven Architecture
 
-Se você quiser simular grupo de consumidores:
+- Comunicação assíncrona via Kafka
+- Desacoplamento entre serviços
+- Alta resiliência e escalabilidade
 
-docker exec -it kafka kafka-console-consumer \
-  --topic transactions.created \
-  --bootstrap-server kafka:9092 \
-  --group test-group
+---
 
-Depois resetar offsets:
+### 🔹 API Gateway Pattern
 
-docker exec -it kafka kafka-consumer-groups \
-  --bootstrap-server kafka:9092 \
-  --group test-group \
-  --reset-offsets --to-earliest --execute --topic transactions.created
-⚠️ Erros comuns
-❌ Connection to node -1 could not be established
+- Centraliza entrada no sistema
+- Controle de tráfego
+- Segurança e governança
 
-→ Kafka não subiu direito ou porta errada
+---
 
-❌ localhost:9092 refused
+### 🔹 Observabilidade
 
-→ Container não expôs porta ou está usando IP errado
+- Tracing distribuído com Zipkin
+- Monitoramento de fluxo entre serviços
 
-❌ Kafka subiu mas producer não conecta
+---
 
-→ KAFKA_CFG_ADVERTISED_LISTENERS diferente de localhost
+## ⚙️ Variáveis importantes
 
-No seu compose eu configurei certo pra uso local 👍# infra-local
+### Change API
 
-netstat -ano | findstr :8761
-taskkill /PID 25812 /F; taskkill /PID 7932 /F
+- DATABASE_URL
+- KAFKA_BOOTSTRAP_SERVERS
+- ZIPKIN_URL
 
-===
-Ainda no PowerShell (admin):
+### Deploy API
 
-wsl --shutdown
+- KAFKA_BOOTSTRAP_SERVERS
+- ZIPKIN_URL
 
-Depois:
+---
 
-net stop com.docker.service
-net start com.docker.service
+## 🧪 Teste rápido
 
-Ou simplesmente:
+```bash
+curl http://localhost:8000/change
+```
 
-Feche Docker
+👉 Essa chamada passa pelo Kong → Change API → Kafka → Deploy API
 
-Abra novamente
+---
 
-Teste:
+## 📌 Observações
 
-docker info
+- Kafka configurado com listeners interno/externo
+- Banco inicializado via init.sql
+- Rede Docker compartilhada: nexus-network
 
+---
 
-docker compose -f docker-compose.infra.yml up -d
-docker compose -f docker-compose.apps.yml up -d
-docker compose -f docker-compose.apps.yml down# infra-local-v2
+## 🚀 Próximos passos (evolução)
+
+- 🔐 Adicionar autenticação com JWT (Kong)
+- 📊 Integrar Prometheus + Grafana
+- ♻️ Implementar DLQ no Kafka
+- ☁️ Deploy em Kubernetes (EKS / Minikube)
+
+---
+
+## 👨‍💻 Autor
+
+Projeto desenvolvido para estudo de:
+
+- Arquitetura de microserviços
+- Event-driven systems
+- API Gateway (Kong)
+- Observabilidade distribuída

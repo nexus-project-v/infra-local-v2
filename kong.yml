@@ -1,0 +1,23 @@
+_format_version: "3.0"
+
+services:
+  - name: change-api
+    url: http://nexus-change-api:9933
+    routes:
+      - name: change-route
+        paths:
+          - /change
+
+  #- name: deploy-api
+  #  url: http://nexus-deploy-api:9934
+  #  routes:
+  #    - name: deploy-route
+  #      paths:
+  #        - /deploy
+
+plugins:
+  - name: rate-limiting
+    route: change-route
+    config:
+      minute: 25
+      policy: local
