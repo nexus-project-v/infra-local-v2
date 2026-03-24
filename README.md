@@ -173,3 +173,12 @@ Projeto desenvolvido para estudo de:
 - Event-driven systems
 - API Gateway (Kong)
 - Observabilidade distribuída
+
+## 👨‍💻 Arquitetura e Desenvolvimento
+
+**Rogério Fontes**  
+Software Architect | AWS | Azure | Java | Go  
+
+- 🧠 Especialista em arquitetura distribuída  
+- ☁️ Foco em Cloud (AWS/Azure)  
+- 🏗️ Microservices & Event-Driven Systems
