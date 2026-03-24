@@ -165,7 +165,7 @@ curl http://localhost:8000/change
 
 ---
 
-## 👨‍💻 Autor
+## ⚙️ Desenvolvimento
 
 Projeto desenvolvido para estudo de:
 
